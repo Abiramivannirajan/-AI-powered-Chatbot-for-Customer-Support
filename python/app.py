@@ -1,50 +1,66 @@
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import speech_recognition as sr
+import numpy as np
 import pandas as pd
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
-def load_csv(file_path):
-    """ Load CSV file and ensure column names are correct. """
-    df = pd.read_csv(file_path)
-    
-    # Rename columns if needed (Ensure the headers are correct)
-    expected_columns = [f'Q{i}' for i in range(1, 21)] + ['Department']
-    
-    if list(df.columns) != expected_columns:
-        df.columns = expected_columns  # Fix column names if needed
-    
-    print("\nCSV Loaded:")
+app = Flask(__name__)
+CORS(app)
 
-    return df
+# Load the model and dataset
+qa_dataset_path = 'qa_dataset.csv'
+embedding_path = 'embeddings.npy'
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
-def get_user_input():
-    """ Collect 20 Yes/No inputs from the user. """
-    user_inputs = []
-    print("\nEnter 20 Yes/No inputs:")
-    
-    for i in range(1, 21):
-        while True:
-            answer = input(f"Q{i}: ").strip().lower()  # Convert to lowercase for consistency
-            if answer in ['yes', 'no']:
-                user_inputs.append(answer.capitalize())  # Store as 'Yes' or 'No' (to match CSV)
-                break
-            else:
-                print("Invalid input! Please enter 'Yes' or 'No'.")
+# Load dataset and embeddings
+def load_embeddings():
+    global df, embeddings
+    df = pd.read_csv(qa_dataset_path)
+    df = df.dropna(subset=['question', 'answer'])
+    df['question'] = df['question'].str.strip()
+    df['answer'] = df['answer'].str.strip()
+    embeddings = np.load(embedding_path)
 
-    print("\nUser inputs captured:", user_inputs)
-    return user_inputs
+load_embeddings()
 
-def predict_department(df, user_inputs):
-    """ Compare user inputs with CSV rows and return matching department. """
-    for index, row in df.iterrows():
-        row_values = row[:-1].tolist()  # Exclude the last column (Department)
-        
-        if row_values == user_inputs:
-            return row['Department']
-    
-    return "No matching department found"
+# Get chatbot response
+def get_chatbot_response(user_input):
+    user_input_embedding = model.encode([user_input])
+    if len(embeddings) == 0:
+        return "Sorry, I don't have enough data to answer that."
+    similarities = cosine_similarity(user_input_embedding, embeddings)
+    best_match_index = np.argmax(similarities)
+    if similarities[0][best_match_index] < 0.5:
+        return "Sorry, I couldn't understand your question. Please rephrase it."
+    return df.iloc[best_match_index]['answer']
 
-# Main Execution
-file_path = 'Book1.csv'  # Ensure your CSV file is named 'Book1.csv' and is in the same directory
-df = load_csv(file_path)
-user_inputs = get_user_input()
-predicted_department = predict_department(df, user_inputs)
+# Speech recognition function
+def recognize_speech():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening... Speak now.")
+        recognizer.adjust_for_ambient_noise(source)
+        try:
+            audio = recognizer.listen(source)
+            text = recognizer.recognize_google(audio)
+            print(f"You said: {text}")
+            return text
+        except sr.UnknownValueError:
+            return None
+        except sr.RequestError:
+            return None
 
-print("\nPredicted Department:", predicted_department)
+# Voice chat API endpoint
+@app.route('/voice_chat', methods=['GET'])
+def voice_chat_api():
+    user_input = recognize_speech()
+    if user_input:
+        bot_response = get_chatbot_response(user_input)
+        return jsonify({'bot_response': bot_response, 'user_input': user_input})
+    return jsonify({'error': 'Speech not recognized'})
+
+if __name__ == '__main__':
+    app.run(debug=True, use_reloader=False)
