@@ -1,10 +1,8 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
-const fs = require('fs-extra');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+const express = require('express');// request(url)
+const cors = require('cors');// access across the all origin
+const bodyParser = require('body-parser'); // parse the request and response
+const nodemailer = require('nodemailer');//send gmail using configuration
+require('dotenv').config();//env set email or password
 const app = express();
 // const storage = multer.memoryStorage();
 // const upload = multer({ storage });

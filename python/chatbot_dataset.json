@@ -8,15 +8,15 @@
         "answer": "Madurai"
     },
     {
-        "question": "What experience is required for AppGenius?",
+        "question": "What experience is required  AppGenius?",
         "answer": "2 years"
     },
     {
-        "question": "What is the salary for AppGenius?",
+        "question": "salary package  AppGenius?",
         "answer": "20,0000"
     },
     {
-        "question": "How do I apply for a job at AppGenius?",
+        "question": "How do I apply for a job  AppGenius?",
         "answer": "**Job Role:** Mobile Engineer (iOS/Android)\n**Email:** jobs@appgenius.com\n**Apply Here:** https://appgenius.com/jobs/mobile"
     },
     {
@@ -28,15 +28,15 @@
         "answer": "Madurai"
     },
     {
-        "question": "What experience is required for NextGen Solutions?",
+        "question": "What experience is required  NextGen Solutions?",
         "answer": "Fresher"
     },
     {
-        "question": "What is the salary for NextGen Solutions?",
+        "question": "salary package  NextGen Solutions?",
         "answer": "30,000"
     },
     {
-        "question": "How do I apply for a job at NextGen Solutions?",
+        "question": "How do I apply for a job  NextGen Solutions?",
         "answer": "**Job Role:** Backend Engineer\n**Email:** hr@nextgensolutions.com\n**Apply Here:** https://nextgensolutions.com/jobs/backend"
     },
     {
@@ -48,15 +48,15 @@
         "answer": "Chennai"
     },
     {
-        "question": "What experience is required for SkyCloud Technologies?",
+        "question": "What experience is required  SkyCloud Technologies?",
         "answer": "3 years"
     },
     {
-        "question": "What is the salary for SkyCloud Technologies?",
+        "question": "salary package  SkyCloud Technologies?",
         "answer": "40,000"
     },
     {
-        "question": "How do I apply for a job at SkyCloud Technologies?",
+        "question": "How do I apply for a job  SkyCloud Technologies?",
         "answer": "**Job Role:** Cloud Engineer\n**Email:** careers@skycloudtech.com\n**Apply Here:** https://skycloudtech.com/jobs/cloud"
     },
     {
@@ -68,15 +68,15 @@
         "answer": "Thoothukudi"
     },
     {
-        "question": "What experience is required for Tech Innovations Inc?",
+        "question": "What experience is required  Tech Innovations Inc?",
         "answer": "5 years"
     },
     {
-        "question": "What is the salary for Tech Innovations Inc?",
+        "question": "salary package  Tech Innovations Inc?",
         "answer": "200000"
     },
     {
-        "question": "How do I apply for a job at Tech Innovations Inc?",
+        "question": "How do I apply for a job  Tech Innovations Inc?",
         "answer": "**Job Role:** Software Engineer\n**Email:** hr@techinnovations.com\n**Apply Here:** https://github.com/"
     },
     {
@@ -88,15 +88,15 @@
         "answer": "Chennai"
     },
     {
-        "question": "What experience is required for InnovateTech Inc?",
+        "question": "What experience is required  InnovateTech Inc?",
         "answer": "3 years"
     },
     {
-        "question": "What is the salary for InnovateTech Inc?",
+        "question": "salary package  InnovateTech Inc?",
         "answer": "50,000"
     },
     {
-        "question": "How do I apply for a job at InnovateTech Inc?",
+        "question": "How do I apply for a job  InnovateTech Inc?",
         "answer": "**Job Role:** Frontend Engineer\n**Email:** jobs@innovatetech.com\n**Apply Here:** https://innovatetech.com/careers/frontend"
     },
     {
@@ -108,63 +108,87 @@
         "answer": "Chennai"
     },
     {
-        "question": "What experience is required for AI Future Labs?",
+        "question": "What experience is required  AI Future Labs?",
         "answer": "4 years"
     },
     {
-        "question": "What is the salary for AI Future Labs?",
+        "question": "salary package  AI Future Labs?",
         "answer": "40,000"
     },
     {
-        "question": "How do I apply for a job at AI Future Labs?",
+        "question": "How do I apply for a job  AI Future Labs?",
         "answer": "**Job Role:** AI/ML Engineer\n**Email:** hr@aifuturelabs.com\n**Apply Here:** https://aifuturelabs.com/careers/ml"
     },
     {
-        "question": "List jobs in Madurai",
-        "answer": "Companies hiring in Madurai: AppGenius, NextGen Solutions."
+        "question": "List jobs  Madurai",
+        "answer": "Companies hiring  Madurai: AppGenius, NextGen Solutions."
     },
     {
-        "question": "Show job openings in Madurai",
-        "answer": "Available companies in Madurai: AppGenius, NextGen Solutions."
+        "question": "Show job openings  Madurai",
+        "answer": "Available companies  Madurai: AppGenius, NextGen Solutions."
     },
     {
-        "question": "List jobs in Chennai",
-        "answer": "Companies hiring in Chennai: SkyCloud Technologies, InnovateTech Inc, AI Future Labs."
+        "question": "List jobs  Chennai",
+        "answer": "Companies hiring  Chennai: SkyCloud Technologies, InnovateTech Inc, AI Future Labs."
     },
     {
-        "question": "Show job openings in Chennai",
-        "answer": "Available companies in Chennai: SkyCloud Technologies, InnovateTech Inc, AI Future Labs."
+        "question": "Show job openings  Chennai",
+        "answer": "Available companies  Chennai: SkyCloud Technologies, InnovateTech Inc, AI Future Labs."
     },
     {
-        "question": "List jobs in Thoothukudi",
-        "answer": "Companies hiring in Thoothukudi: Tech Innovations Inc."
+        "question": "List jobs  Thoothukudi",
+        "answer": "Companies hiring  Thoothukudi: Tech Innovations Inc."
     },
     {
-        "question": "Show job openings in Thoothukudi",
-        "answer": "Available companies in Thoothukudi: Tech Innovations Inc."
+        "question": "Show job openings  Thoothukudi",
+        "answer": "Available companies  Thoothukudi: Tech Innovations Inc."
     },
     {
-        "question": "What job roles are available at AppGenius?",
-        "answer": "Available roles at AppGenius: Mobile Engineer (iOS/Android)."
+        "question": "What job roles are available AppGenius?",
+        "answer": "Available roles AppGenius: Mobile Engineer (iOS/Android)."
     },
     {
-        "question": "What job roles are available at NextGen Solutions?",
-        "answer": "Available roles at NextGen Solutions: Backend Engineer."
+        "question": "roles in AppGenius?",
+        "answer": "Available roles  AppGenius: Mobile Engineer (iOS/Android)."
     },
     {
-        "question": "What job roles are available at SkyCloud Technologies?",
-        "answer": "Available roles at SkyCloud Technologies: Cloud Engineer."
+        "question": "What job roles are available NextGen Solutions?",
+        "answer": "Available roles NextGen Solutions: Backend Engineer."
     },
     {
-        "question": "What job roles are available at Tech Innovations Inc?",
-        "answer": "Available roles at Tech Innovations Inc: Software Engineer."
+        "question": "roles in NextGen Solutions?",
+        "answer": "Available roles  NextGen Solutions: Backend Engineer."
     },
     {
-        "question": "What job roles are available at InnovateTech Inc?",
-        "answer": "Available roles at InnovateTech Inc: Frontend Engineer."
+        "question": "What job roles are available SkyCloud Technologies?",
+        "answer": "Available roles SkyCloud Technologies: Cloud Engineer."
     },
     {
-        "question": "What job roles are available at AI Future Labs?",
-        "answer": "Available roles at AI Future Labs: AI/ML Engineer."
+        "question": "roles in SkyCloud Technologies?",
+        "answer": "Available roles  SkyCloud Technologies: Cloud Engineer."
+    },
+    {
+        "question": "What job roles are available Tech Innovations Inc?",
+        "answer": "Available roles Tech Innovations Inc: Software Engineer."
+    },
+    {
+        "question": "roles in Tech Innovations Inc?",
+        "answer": "Available roles  Tech Innovations Inc: Software Engineer."
+    },
+    {
+        "question": "What job roles are available InnovateTech Inc?",
+        "answer": "Available roles InnovateTech Inc: Frontend Engineer."
+    },
+    {
+        "question": "roles in InnovateTech Inc?",
+        "answer": "Available roles  InnovateTech Inc: Frontend Engineer."
+    },
+    {
+        "question": "What job roles are available AI Future Labs?",
+        "answer": "Available roles AI Future Labs: AI/ML Engineer."
+    },
+    {
+        "question": "roles in AI Future Labs?",
+        "answer": "Available roles  AI Future Labs: AI/ML Engineer."
     }
 ]
