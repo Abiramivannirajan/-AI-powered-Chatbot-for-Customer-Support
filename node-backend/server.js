@@ -4,8 +4,7 @@ const bodyParser = require('body-parser'); // parse the request and response
 const nodemailer = require('nodemailer');//send gmail using configuration
 require('dotenv').config();//env set email or password
 const app = express();
-// const storage = multer.memoryStorage();
-// const upload = multer({ storage });
+
 
 app.use(cors()); // Enable CORS
 app.use(express.json());

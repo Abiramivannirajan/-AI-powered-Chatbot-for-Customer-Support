@@ -1,280 +1,135 @@
 import requests
 import json
-import os
+import ssl  
+import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from rapidfuzz import process #string matching 
-#Fetching data from couch
-# CouchDB Credentials
+import urllib3
+from textblob import TextBlob 
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Initialize the embedding model
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# SSL Handling for HTTPS requests
+ssl._create_default_https_context = ssl._create_unverified_context
+
 COUCHDB_URL = "https://192.168.57.185:5984"
 DB_NAME = "dpg_chatbot"
-VIEW_JOBDETAILS = "jobdetails_by_id"
-USERNAME = "d_couchdb"
-PASSWORD = "Welcome#2"
+DESIGN_DOC = "view"  # Ensure this matches your design document name
+VIEW_NAME = "jobdetails_by_id"
 
-# Load Two NLP Models for Better Accuracy
-model_1 = SentenceTransformer("paraphrase-MiniLM-L6-v2")  
-model_2 = SentenceTransformer("distilbert-base-nli-mean-tokens")
+VIEW_URL = f"{COUCHDB_URL}/{DB_NAME}/_design/{DESIGN_DOC}/_view/{VIEW_NAME}?include_docs=true"
 
-requests.packages.urllib3.disable_warnings()
+# Gemini API details
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_KEY = "AIzaSyBLxzeAh498flmqTsgZ8_R3QmXnfpqST9s"
+GEMINI_HEADERS = {"Content-Type": "application/json"}
 
-def fetch_data(view_name):
-    """Fetch data from CouchDB view."""
+# Fetch job data from CouchDB
+def fetch_job_data():
     try:
-        response = requests.get(
-            f"{COUCHDB_URL}/{DB_NAME}/_design/view/_view/{view_name}",
-            auth=(USERNAME, PASSWORD),
-            verify=False
-        )
+        response = requests.get(VIEW_URL, auth=("d_couchdb", "Welcome#2"), verify=False)
         response.raise_for_status()
-        data = response.json()
-
-        if "rows" not in data or not data["rows"]:
+        job_data = response.json()
+        
+        if "rows" not in job_data or not isinstance(job_data["rows"], list):
+            print("Invalid response format from CouchDB")
             return []
-
-        documents = []
-        for row in data["rows"]:
-            doc_id = row.get("id")
-            doc_response = requests.get(
-                f"{COUCHDB_URL}/{DB_NAME}/{doc_id}",
-                auth=(USERNAME, PASSWORD),
-                verify=False
-            )
-            doc_response.raise_for_status()
-            documents.append(doc_response.json())
-
-        return documents
+        
+        job_list = []
+        for row in job_data["rows"]:
+            doc = row.get("doc", {})
+            job_details = doc.get("data", {})
+            if isinstance(job_details, dict) and "companyName" in job_details:
+                job_list.append(job_details)
+        return job_list
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching {view_name}: {e}")
+        print("Error fetching job data:", str(e))
         return []
 
-def process_data(documents):
-    """Convert job postings into Q&A format, including job-specific and district-based questions."""
-    qa_data = []
-    district_jobs = {}
-    company_roles = {}
-
-    for doc in documents:
-        data = doc.get("data", {})
-        if not data:
-            continue
-
-        company = data.get("companyName", "").strip()
-        location = data.get("location", "").strip().title()
-        job_role = data.get("jobRole", "").strip()
-        email = data.get("email", "").strip()
-        apply_link = data.get("applyLink", "").strip()
-        description = data.get("description", "").strip()
-        experience = data.get("experience", "").strip()
-        salary = data.get("salary", "").strip()
-
-        if company and job_role:
-            if company not in company_roles:
-                company_roles[company] = []
-            company_roles[company].append(job_role)
-
-        if company:
-            qa_data.append({"question": f"What is {company}?", "answer": description})
-            qa_data.append({"question": f"Where is {company} located?", "answer": location})
-            qa_data.append({"question": f"What experience is required  {company}?", "answer": experience})
-            qa_data.append({"question": f"salary package  {company}?", "answer":  salary})
-
-        if company and apply_link:
-            qa_data.append({
-                "question": f"How do I apply for a job  {company}?",
-                "answer": f"**Job Role:** {job_role}\n**Email:** {email}\n**Apply Here:** {apply_link}"
-            })
-
-        if location:
-            if location not in district_jobs:
-                district_jobs[location] = []
-            district_jobs[location].append(company)
-
-    for location, companies in district_jobs.items():
-        company_list = ", ".join(companies)
-        qa_data.append({
-            "question": f"List jobs  {location}",
-            "answer": f"Companies hiring  {location}: {company_list}."
-        })
-        qa_data.append({
-            "question": f"Show job openings  {location}",
-            "answer": f"Available companies  {location}: {company_list}."
-        })
-
-    for company, roles in company_roles.items():
-        role_list = ", ".join(roles)
-        qa_data.append({
-            "question": f"What job roles are available {company}?",
-            "answer": f"Available roles {company}: {role_list}."
-        })
-        qa_data.append({
-            "question": f"roles in {company}?",
-            "answer": f"Available roles  {company}: {role_list}."
-        })
+# Create FAISS index for job listings
+def create_faiss_index(jobs):
+    job_descriptions = [
+        f"{job.get('jobRole', 'Unknown Job')} at {job.get('companyName', 'Unknown Company')} in {job.get('location', 'Unknown Location')}"
+        for job in jobs
+    ]
+    embeddings = embedding_model.encode(job_descriptions)
     
-    return qa_data
-
-def save_to_json(data, filename="chatbot_dataset.json"):
-    """Save processed data to JSON."""
-    with open(filename, "w") as file:
-        json.dump(data, file, indent=4)
-
-def train_chatbot():
-    """Train chatbot by creating embeddings from stored dataset."""
-    try:
-        with open("chatbot_dataset.json", "r") as file:
-            dataset = json.load(file)
-    except FileNotFoundError:
-        return
-
-    questions = [item["question"] for item in dataset]
+    dimension = embeddings.shape[1]  # Size of the vector
+    index = faiss.IndexFlatL2(dimension)  # Index for nearest neighbor search & Euclidean distance metric
+    index.add(np.array(embeddings, dtype=np.float32))  # Add embeddings to the index
     
-    embeddings_1 = model_1.encode(questions)
-    embeddings_2 = model_2.encode(questions)
-    
-    np.save("embeddings_1.npy", embeddings_1)
-    np.save("embeddings_2.npy", embeddings_2)
+    return index, job_descriptions, jobs
 
-def update_chatbot():
-    """Update chatbot if new data is available."""
-    job_data = fetch_data(VIEW_JOBDETAILS)
+# Perform similarity search
+def search_jobs(query, index, job_descriptions, jobs, top_k=5):
+    query_embedding = embedding_model.encode([query])
+    distances, indices = index.search(np.array(query_embedding, dtype=np.float32), top_k)
+    return [jobs[i] for i in indices[0] if i < len(jobs)]
+
+# Process query with Gemini AI
+def process_with_gemini(query, index, job_descriptions, jobs):
+    corrected_query = str(TextBlob(query).correct())  # Corrected this line
+    relevant_jobs = search_jobs(corrected_query, index, job_descriptions, jobs)
+    
+    if not relevant_jobs:
+        return "I'm sorry, I couldn't find job listings related to your query."
+    
+    job_json = json.dumps(relevant_jobs, indent=2)
+    prompt = f"""
+    You are a job search assistant. You have access to the following job data:
+    
+    {job_json}
+    
+    Answer the following question based on the data available:
+    "{corrected_query}"
+    
+    If the answer isn't found in the job data, respond with "I'm sorry, I couldn't find that information."
+    """
+    
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],  # Convert Python dictionary to JSON
+        "safetySettings": [{"category": "HARM_CATEGORY_HARASSMENT", "threshold": 1}],
+    }
+
+    response = requests.post(
+        f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+        headers=GEMINI_HEADERS,
+        data=json.dumps(payload),
+    )
+    
+    if response.status_code == 200:
+        gemini_response = response.json()
+        try:
+            return gemini_response["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except KeyError:
+            return "Unexpected response format from Gemini."
+    else:
+        return "Error processing request with Gemini."
+
+# Main chatbot function
+def chatbot():
+    print("\nWelcome to the AI-Powered Job Chatbot with FAISS & Gemini!")
+    print("Type 'exit' to quit.\n")
+    
+    job_data = fetch_job_data()
     if not job_data:
-        print("No job data retrieved from CouchDB. Please check database connection.")
+        print("No job data available. Please check your database connection.")
         return
     
-    qa_data = process_data(job_data)
-    save_to_json(qa_data)
-    train_chatbot()
-
-def find_best_match(user_input):
-    """Find the best matching question from the dataset using both models."""
-    try:
-        with open("chatbot_dataset.json", "r") as file:
-            dataset = json.load(file)
-    except FileNotFoundError:
-        return "No data available. Train chatbot first."
-
-    questions = [item["question"] for item in dataset]
-    answers = [item["answer"] for item in dataset]
-
-    if not questions:
-        return "No trained data available."
+    index, job_descriptions, jobs = create_faiss_index(job_data)
     
-    if not os.path.exists("embeddings_1.npy") or not os.path.exists("embeddings_2.npy"):
-        return "Embeddings not found. Please train the chatbot first."
-    
-    embeddings_1 = np.load("embeddings_1.npy")
-    embeddings_2 = np.load("embeddings_2.npy")
-
-    input_embedding_1 = model_1.encode([user_input])
-    input_embedding_2 = model_2.encode([user_input])
-
-    similarity_1 = np.dot(embeddings_1, input_embedding_1.T).flatten()
-    similarity_2 = np.dot(embeddings_2, input_embedding_2.T).flatten()
-
-    best_idx_1 = np.argmax(similarity_1)
-    best_idx_2 = np.argmax(similarity_2)
-
-    if similarity_1[best_idx_1] > similarity_2[best_idx_2]:
-        return answers[best_idx_1] if similarity_1[best_idx_1] > 0.75 else "Sorry, I don't understand that."
-    else:
-        return answers[best_idx_2] if similarity_2[best_idx_2] > 0.75 else "Sorry, I don't understand that."
-
-def list_all_companies(documents):
-    """List all companies with job roles."""
-    all_companies = []
-
-    for doc in documents:
-        data = doc.get("data", {})
-        if not data:
-            continue
-
-        company = data.get("companyName", "").strip()
-
-        # If company exists, add it to the list
-        if company:
-            all_companies.append(company)
-
-    return list(set(all_companies))  # Remove duplicates by converting to set and back to list
-
-def chatbot_terminal():
-    """Run chatbot in terminal mode."""
-    print("\nChatbot is ready! Type 'exit' to quit.\n")
     while True:
-        user_input = input("You: ").strip()
+        user_input = input("You: ")
         if user_input.lower() == "exit":
-            print("Exiting chatbot. Have a great day!")
+            print("Goodbye!")
             break
+        
+        response = process_with_gemini(user_input, index, job_descriptions, jobs)
+        print(f"\nBot: {response}\n")
 
-        response = find_best_match(user_input)
-        print("Chatbot:", response)
-
-def main():
-    """Main function to update and run chatbot."""
-    update_chatbot()
-
-    # Get the list of all companies with job roles
-    job_data = fetch_data(VIEW_JOBDETAILS)
-    if job_data:
-        all_companies = list_all_companies(job_data)
-        print("Companies hiring:")
-        for company in all_companies:
-            print(company)
-    else:
-        print("No job data retrieved from CouchDB.")
-
-    chatbot_terminal()
-
+# Run the chatbot
 if __name__ == "__main__":
-    main()
-
-
-# import streamlit as st 
-# import google.generativeai as genai 
-
-
-# genai.configure(api_key="AIzaSyArdQA4hsN0rlUJLBT09bDbR0UPaaYryhY")  
-
-
-# def get_gemini_response(user_input): 
-#     """Generate a structured, precise response using Gemini API with advanced prompting."""
-
-#     prompt = f"""
-#     You are an expert career counselor assisting students with their education and job queries. 
-#     Provide **accurate, structured, and to-the-point responses** in a **step-by-step manner**.
-
-#     **Guidelines for Response:**
-#     - Keep answers **precise and structured** (no generic responses).
-#     - Use **bullet points or step-by-step breakdowns**.
-#     - **If the question is about higher education**, suggest courses based on eligibility, entrance exams, and future job scope.
-#     - **If the question is about career paths**, provide job roles, industries, salaries, and required skills.
-#     - **If the question is about entrance exams**, list eligibility, syllabus, and exam dates.
-#     - **If the question is about a confused student**, give **motivational and clear** guidance.
-#     - **If the user asks about multiple fields**, compare them with advantages and disadvantages.
-    
-#     **Example Response Structure:**
-#      **Available Courses:** List top courses based on the student’s stream.  
-#      **Entrance Exams:** Mention exams required for admission.  
-#      **Job Opportunities:** List job roles, industries, salary trends.  
-#      **Future Scope:** Explain growth trends and industry demand.  
-
-#     **Student's Question:** {user_input}
-#     """
-
-#     model = genai.GenerativeModel("gemini-1.5-flash")
-#     response = model.generate_content(prompt)
-
-#     return response.text if response.text else "Sorry, I couldn't generate a precise response."
-
- 
-# st.title("Career Guidance Chatbot")
-# st.write("Get precise answers about courses, job opportunities, and career choices!")
-
-
-# user_input = st.text_input("Type your question here:")
-
-# if user_input:
-#     response = get_gemini_response(user_input)
-#     st.write("**Bot:**", response)
-
-
+    chatbot()
